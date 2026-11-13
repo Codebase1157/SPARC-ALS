@@ -1,0 +1,31 @@
+# C1 — Matched multi-task control. 1.91 M trainable parameters, same budget
+# as SPARC-ALS but with no nuisance path, no graph and no counterfactuals.
+# Reports Table 6 and Table 7.
+name: C1_matched_multitask
+encoder: { name: wavlm-large, hf_id: microsoft/wavlm-large, frozen: true }
+adapter:
+  single_path: true             # one adapter only (no nuisance path)
+  hidden_down: 64
+  hidden_up: 1024
+  depthwise_conv_width: 15
+  activation: gelu
+pooling: attentive_statistics
+embedding_dim: 256
+heads:
+  detection: { in: 256, out: 1 }
+  severity:  { in: 256, out: 4, type: cumulative_logits }
+  ndt:       { in: 256, hidden: 128, out: 4 }
+losses:
+  detection: bce
+  severity: ordinal_cumulative_logits
+  ndt: huber
+  weights: { detection: 1.0, severity: 0.5, ndt: 0.5 }
+# No VSGA, no counterfactuals, no GRL, no nuisance adapter.
+use:
+  vsga: false
+  counterfactuals: false
+  grl: false
+  nuisance_adapter: false
+optim: { name: adamw, lr: 3.0e-4, weight_decay: 0.01 }
+training: { max_epochs: 60, patience: 10, batch_size: 32 }
+param_count: 1910000

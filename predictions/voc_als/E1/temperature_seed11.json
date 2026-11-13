@@ -1,0 +1,9 @@
+{
+  "temperature": 1.237,
+  "fit_on": "source_inner_validation",
+  "refit_on_target": false,
+  "seed_id": 11,
+  "corpus": "voc_als",
+  "experiment": "E1",
+  "note": "Temperature is fit once on source inner-validation speakers and frozen on target (Section 5). Decision threshold is p >= 0.5."
+}

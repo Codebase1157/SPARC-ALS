@@ -1,0 +1,52 @@
+# =========================================================================
+# SPARC-ALS v1.0.0 — preprocessing
+# Section 3 (Materials) of the manuscript.
+# These settings are applied identically to every corpus.
+# =========================================================================
+
+# --- Resampling ----------------------------------------------------------
+# Every file is resampled to 16 kHz before any feature extraction.
+# A copy band-limited to 4 kHz is also written, used by E6 (factor-controlled
+# tests) and by the acoustic-target pipeline.
+target_sr_hz: 16000
+analysis_band_lowpass_hz: 4000   # band used to compute NDT targets
+
+# --- Loudness ------------------------------------------------------------
+# All files are normalized to -26 dBFS RMS (ITU-R BS.1770-independent,
+# peak-safe implementation in sparc_als/utils/loudness.py).
+target_rms_dbfs: -26.0
+peak_ceiling_dbfs: -1.0
+
+# --- Voice activity detection --------------------------------------------
+vad:
+  backend: webrtc            # py-webrtcvad, aggressiveness 2
+  frame_ms: 30
+  aggressiveness: 2
+  min_voiced_segment_ms: 150
+  min_silence_merge_ms: 200
+
+# --- Sustained-vowel edge trimming ---------------------------------------
+# Section 3: 250 ms removed from both ends of every sustained vowel.
+sustained_vowel_trim_ms: 250
+
+# --- TORGO utterance subset ----------------------------------------------
+# Section 3: 150 array-microphone words/sentences per speaker drawn with a
+# fixed seed.
+torgo:
+  microphone_channel: array
+  utterances_per_speaker: 150
+  draw_seed: 42
+  include_prompts: [words, short_sentences, long_sentences]
+
+# --- Token set V ---------------------------------------------------------
+# VOC-ALS and Minsk2020 contribute from the following token set.
+voc_als_tokens: [a, e, i, o, u, pa, ta, ka]
+minsk2020_tokens: [a, i]                 # vowels only
+cross_corpus_tier: [a, i]                # the /a/–/i/ tier shared by all
+
+# --- Output cache --------------------------------------------------------
+# Deterministic file naming: <corpus>/<speaker_id>/<token_id>.wav.
+output_root: data/features
+write_16k: true
+write_4k: true
+hash_manifest_path: data/features/MANIFEST.sha256

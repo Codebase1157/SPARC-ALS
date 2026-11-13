@@ -1,0 +1,39 @@
+# =========================================================================
+# SPARC-ALS v1.0.0 — Forced alignment (TORGO only)
+# Section 3: Montreal Forced Aligner v2, english_us_arpa model + dictionary.
+# =========================================================================
+
+mfa:
+  version: "2.2.17"
+  acoustic_model: "english_us_arpa"
+  dictionary:     "english_us_arpa"
+  g2p_fallback:   "english_us_arpa"
+  beam: 10
+  retry_beam: 40
+  num_jobs: 4
+
+# --- Vowel-nucleus extraction --------------------------------------------
+# After alignment, extract per-utterance vowel nuclei. Nuclei shorter than
+# 60 ms are discarded (Section 3).
+nucleus:
+  min_duration_ms: 60
+  analyze_central_fraction: 0.40    # NDT measures use the central 40 %
+  target_vowels: [AA, AE, AH, AO, AW, AY, EH, ER, EY, IH, IY, OW, OY, UH, UW]
+
+# --- Cross-corpus harmonization ------------------------------------------
+# For E3 / E4 only the /a/–/i/ tier is used. TORGO nuclei are mapped as
+# follows before being pooled with VOC-ALS or Minsk2020 vowels.
+cross_corpus_mapping:
+  a_like: [AA, AE, AH]
+  i_like: [IY, IH, EY]
+
+# --- Per-speaker minima --------------------------------------------------
+# A TORGO speaker without at least three /a/ and three /i/ nuclei after
+# filtering is not used for cross-corpus evaluation (axes ii and iii in
+# Table 3 require it).
+torgo_min_nuclei_per_vowel: 3
+
+# --- Output --------------------------------------------------------------
+output_root: data/alignments/torgo
+textgrid_root: data/alignments/torgo/textgrids
+nuclei_manifest: data/alignments/torgo/nuclei.csv

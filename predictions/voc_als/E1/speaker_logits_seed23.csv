@@ -1,0 +1,6 @@
+speaker_id,logit,prob,decision,label,severity,seed_id,corpus,fold_id,experiment
+VOC_ALS_0001,2.502,0.924,1,1,3,23,voc_als,0,E1
+VOC_ALS_0002,1.610,0.834,1,1,4,23,voc_als,1,E1
+VOC_ALS_0003,-1.754,0.148,0,0,0,23,voc_als,2,E1
+VOC_ALS_0004,0.388,0.596,1,1,2,23,voc_als,3,E1
+VOC_ALS_0005,-2.001,0.119,0,0,0,23,voc_als,4,E1

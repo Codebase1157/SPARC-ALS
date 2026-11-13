@@ -1,0 +1,14 @@
+# C6 — Token reduction at test time on VOC-ALS. Reports Section 6.6.
+name: C6_token_reduction
+variants:
+  a_i_only:
+    description: "Test speakers reduced to /a/ and /i/."
+    token_subset: [a, i]
+  vowels_only:
+    description: "Test speakers reduced to /a, e, i, o, u/."
+    token_subset: [a, e, i, o, u]
+  half_tokens:
+    description: "Half of each speaker's tokens, drawn with a fixed seed per speaker."
+    token_fraction: 0.5
+    draw_seed_key: speaker_id      # deterministic per speaker
+everything_else: inherit_from_sparc_als

@@ -1,0 +1,6 @@
+speaker_id,logit,prob,decision,label,severity,seed_id,corpus,fold_id,experiment,etiology
+F01,1.602,0.832,1,1,-1,11,torgo,0,E1,CP
+F03,1.471,0.813,1,1,-1,11,torgo,1,E1,CP
+M03,2.112,0.892,1,1,-1,11,torgo,5,E1,ALS
+FC01,-1.883,0.132,0,0,0,11,torgo,8,E1,HC
+MC01,-1.711,0.153,0,0,0,11,torgo,11,E1,HC

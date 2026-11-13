@@ -1,0 +1,14 @@
+# C3 — Token transformer (no vowel-space prior), matched to VSGA's 168 k
+# parameters. Reports Table 7.
+name: C3_token_transformer_no_prior
+replace_module: vsga
+replace_with: token_transformer
+transformer:
+  num_layers: 2
+  num_heads: 4
+  d_model: 256
+  dim_ff: 128
+  dropout: 0.1
+  prior_edges: none
+param_count_module: 168000
+everything_else: inherit_from_sparc_als

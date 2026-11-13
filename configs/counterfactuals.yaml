@@ -1,0 +1,103 @@
+# =========================================================================
+# SPARC-ALS v1.0.0 — Counterfactual curriculum
+# Section 4.4 (Table 4) of the manuscript.
+#
+# Four counterfactuals per healthy speaker per epoch. All operators go
+# through the same analysis-resynthesis chain; a null transform
+# (delta = 0) is used by the artifact test (E7) and must stay at
+# chance (null-transform probe AUC ~= 0.5 in Section 6.5).
+# =========================================================================
+
+# --- Common analysis / resynthesis chain ---------------------------------
+# One chain for every operator ensures delta = 0 is an unmodified
+# resynthesis.
+analysis_resynthesis:
+  framework: psola_and_lpc        # PSOLA for T1/T3, LPC for T2, gain for T4
+  frame_ms: 25
+  hop_ms: 5
+  fft_size: 1024
+  resynthesis_window: hamming
+
+# --- Null transform (artifact control) -----------------------------------
+null_transform:
+  delta: 0.0
+  used_in_training: false         # only used by E7 probe
+  target_als_probability_shift: 0.006
+
+# --- Operators -----------------------------------------------------------
+# All strength distributions are uniform. All limits are hard: a sampled
+# strength that would exceed a limit is clipped. A counterfactual is
+# redrawn if its targeted-axis shift is < 0.2 or if any other axis moves
+# by more than 0.5 reference standard deviations.
+redraw:
+  min_targeted_shift: 0.2
+  max_off_target_shift: 0.5
+
+operators:
+
+  # (i) Phonatory stability -----------------------------------------------
+  T1_phonatory:
+    target_axis: phonatory_stability
+    implementation: psola
+    description: >
+      PSOLA; period and amplitude of each cycle scaled by Gaussian factors.
+    strength:
+      period_sd_pct:    { low: 0.5, high: 3.0 }
+      amplitude_sd_pct: { low: 2.0, high: 10.0 }
+    limits:
+      jitter_max_pct: 5.0
+      shimmer_max_pct: 15.0
+
+  # (ii) Articulatory precision -------------------------------------------
+  T2_articulatory:
+    target_axis: articulatory_precision
+    implementation: lpc
+    description: >
+      LPC (order 18); F1, F2 poles moved toward 500 and 1500 Hz
+      (x1.15 for female speakers).
+    strength:
+      fraction_bark: { low: 0.05, high: 0.35 }
+      female_multiplier: 1.15
+    lpc_order: 18
+    f1_target_hz: 500
+    f2_target_hz: 1500
+    limits:
+      min_f2_minus_f1_bark: 1.0
+
+  # (iii) Prosodic / timing -----------------------------------------------
+  T3_prosodic:
+    target_axis: prosodic_timing
+    implementation: psola
+    description: >
+      PSOLA lengthening of DDK syllables; interval jitter.
+    strength:
+      syllable_lengthening_factor: { low: 1.05, high: 1.50 }
+      interval_jitter_sd_pct:      { low: 5.0,  high: 25.0 }
+    limits:
+      min_ddk_rate_syllables_per_s: 2.0
+
+  # (iv) Respiratory support ----------------------------------------------
+  T4_respiratory:
+    target_axis: respiratory_support
+    implementation: gain_and_noise
+    description: >
+      Gain decline in dB over /a/; aspiration noise high-passed at 1 kHz.
+    strength:
+      gain_slope_db_per_s:  { low: -10.0, high: -2.0 }
+      aspiration_snr_db:    { low: 10.0,  high: 30.0 }
+    aspiration_highpass_hz: 1000
+    limits:
+      max_total_level_change_db: 12.0
+
+# --- Batch share decay ---------------------------------------------------
+# rho_n = rho_0 * max(0, 1 - (n - 1) / E_c)
+# with rho_0 = 0.5 and E_c = 10 (Section 4.4).
+batch_share:
+  rho_0: 0.5
+  E_c: 10
+
+# --- Counterfactuals never enter the detection loss (Section 4.4). -------
+use_in_losses:
+  detection: false
+  ndt: true
+  cf_consistency: true   # L_cf, equation above (6)

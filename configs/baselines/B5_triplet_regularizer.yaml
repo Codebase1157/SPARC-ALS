@@ -1,0 +1,33 @@
+# B5 — Triplet regularizer on WavLM, after Kadirvelu et al. 2025.
+# Reports Table 6. 1.9 M trainable parameters.
+#
+# The triplet loss pulls together words of DIFFERENT speakers at the same
+# severity, and pushes apart words of the SAME speaker. The original
+# paper had no nuisance path and did not target ALS; the regularizer is
+# reimplemented on our identical splits.
+name: B5_triplet_regularizer
+encoder: { name: wavlm-large, hf_id: microsoft/wavlm-large, frozen: true }
+adapter:
+  hidden_down: 64
+  hidden_up: 1024
+  depthwise_conv_width: 15
+  activation: gelu
+pooling: attentive_statistics
+embedding_dim: 256
+triplet:
+  margin: 0.2
+  mining: semi_hard
+  pos_rule: different_speakers_same_severity
+  neg_rule: same_speaker
+loss_weights:
+  triplet: 1.0
+  detection: 1.0
+optim: { name: adamw, lr: 3.0e-4, weight_decay: 0.01 }
+training: { max_epochs: 60, patience: 10, batch_size: 32 }
+param_count: 1900000
+hp_search:
+  n_configs: 20
+  triplet_margin: [0.1, 0.2, 0.5]
+  lr: [1.0e-4, 3.0e-4, 1.0e-3]
+  triplet_weight: [0.5, 1.0, 2.0]
+  choose_on: inner_val_bacc

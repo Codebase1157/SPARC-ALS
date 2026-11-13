@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software and the manuscript."
+title: "SPARC-ALS: Speaker-Invariant Pathology-Aware Representation with Vowel-Space Graph Attention for Cross-Corpus Detection of Amyotrophic Lateral Sclerosis"
+version: 1.0.0
+date-released: 2026-11-13
+license: MIT
+authors:
+  - family-names: Ahuja
+    given-names: Komal
+    affiliation: "Chitkara University Institute of Engineering and Technology, India"
+    email: "komal1034cse.phd24@chitkara.edu.in"
+  - family-names: Kaur
+    given-names: Amanpreet
+    affiliation: "Chitkara University Institute of Engineering and Technology, India"
+preferred-citation:
+  type: article
+  title: "SPARC-ALS: Speaker-Invariant Pathology-Aware Representation with Vowel-Space Graph Attention for Cross-Corpus Detection of Amyotrophic Lateral Sclerosis"
+  authors:
+    - family-names: Ahuja
+      given-names: Komal
+    - family-names: Kaur
+      given-names: Amanpreet
+  journal: "International Journal of Intelligent Engineering and Systems"
+  year: 2026

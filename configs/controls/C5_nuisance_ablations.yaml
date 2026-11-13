@@ -1,0 +1,18 @@
+# C5 — Nuisance-path ablations and triplet-regularizer substitution.
+# Reports Table 7.
+name: C5_nuisance_ablations
+variants:
+  nuisance_path_without_adversary:
+    use_nuisance_adapter: true
+    use_grl_on_pathology: false
+    use_nuisance_loss: true
+  adversary_without_nuisance_path:
+    use_nuisance_adapter: false
+    use_grl_on_pathology: true
+    use_nuisance_loss: false
+  triplet_in_place_of_eq3:
+    use_nuisance_adapter: true
+    use_grl_on_pathology: false
+    use_nuisance_loss: false
+    replace_adv_and_nuis_with: B5_triplet_regularizer
+everything_else: inherit_from_sparc_als

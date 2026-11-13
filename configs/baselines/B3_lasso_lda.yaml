@@ -1,0 +1,21 @@
+# B3 — nested LASSO feature selection + LDA, after Vashkevich & Rushkevich 2021.
+# Reports Table 6. 131 handcrafted features.
+name: B3_lasso_lda_nested
+features:
+  n_total: 131
+  families: [jitter, shimmer, hnr, f0_stats, formant_centralization,
+             vowel_space_area, ddk_timing, cpps, intensity_slope,
+             spectral_moments]
+  extractor: parselmouth
+selection:
+  method: lasso_cv
+  inner_cv_folds: 5
+  alphas: 50
+  nested: true                  # selection inside each outer LOSO fold
+classifier:
+  type: lda
+  solver: svd
+hp_search:
+  n_configs: 20
+  lasso_alpha_grid: logspace(-3, 1, 20)
+  choose_on: inner_val_bacc

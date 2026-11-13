@@ -1,0 +1,26 @@
+# B6 — Prototypical network, after Bharathi Sri & Somasundaram 2026.
+# Reports Table 6. 1.2 M trainable parameters.
+name: B6_prototypical_network
+encoder: { name: wavlm-large, hf_id: microsoft/wavlm-large, frozen: true }
+adapter:
+  hidden_down: 64
+  hidden_up: 1024
+  depthwise_conv_width: 15
+  activation: gelu
+pooling: attentive_statistics
+embedding_dim: 256
+episodes:
+  n_support_per_class: 5
+  n_query_per_class: 5
+  n_episodes_per_epoch: 100
+distance: squared_euclidean
+temperature: 1.0
+optim: { name: adamw, lr: 3.0e-4, weight_decay: 0.01 }
+training: { max_epochs: 60, patience: 10, batch_size: episode }
+param_count: 1200000
+hp_search:
+  n_configs: 20
+  lr: [1.0e-4, 3.0e-4, 1.0e-3]
+  n_support: [1, 5, 10]
+  temperature: [0.5, 1.0, 2.0]
+  choose_on: inner_val_bacc

@@ -1,0 +1,5 @@
+speaker_id,logit,prob,decision,label,severity,seed_id,corpus,fold_id,experiment
+MINSK_ALS_01,1.823,0.861,1,1,-1,11,minsk2020,0,E1
+MINSK_ALS_02,1.421,0.805,1,1,-1,11,minsk2020,1,E1
+MINSK_HC_01,-2.015,0.117,0,0,0,11,minsk2020,2,E1
+MINSK_HC_02,-1.783,0.144,0,0,0,11,minsk2020,3,E1

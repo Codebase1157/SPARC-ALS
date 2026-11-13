@@ -1,0 +1,10 @@
+# C2 — Mean pooling in place of VSGA. Matches VSGA's 168 k parameters by
+# adding two linear mixers. Reports Table 7.
+name: C2_mean_pooling
+replace_module: vsga
+replace_with: mean_pooling_with_linear_mixers
+linear_mixers:
+  - { in: 256, out: 256, activation: gelu }
+  - { in: 256, out: 256, activation: identity }
+param_count_module: 168000      # matched to VSGA
+everything_else: inherit_from_sparc_als

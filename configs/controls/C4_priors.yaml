@@ -1,0 +1,13 @@
+# C4 — Prior ablations on VSGA. Reports Table 7.
+name: C4_prior_variants
+variants:
+  uniform:
+    description: "e_{vu} = 1 for every (v, u) edge; syllable priors removed."
+    vowel_edge_weights: uniform
+    syllable_links: unit_only
+  permuted:
+    description: "F1/F2 formant positions permuted across vowels."
+    vowel_edge_weights: gaussian
+    permute_formants_across_vowels: true
+    permutation_seeds: [11, 23, 42, 77, 2025]
+everything_else: inherit_from_sparc_als

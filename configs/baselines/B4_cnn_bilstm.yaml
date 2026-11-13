@@ -1,0 +1,31 @@
+# B4 — CNN-BiLSTM with attention, after Louja et al. 2025.
+# Reports Table 6. 2.4 M trainable parameters.
+name: B4_cnn_bilstm_attention
+input:
+  feature: log_mel
+  n_mels: 80
+  sample_rate: 16000
+  win_ms: 25
+  hop_ms: 10
+cnn:
+  channels: [32, 64, 128]
+  kernels: [[3, 3], [3, 3], [3, 3]]
+  strides: [[1, 2], [1, 2], [1, 2]]
+  dropout: 0.2
+bilstm:
+  hidden: 128
+  num_layers: 2
+  dropout: 0.2
+attention:
+  hidden: 64
+  type: additive
+head: { in: 256, out: 1 }
+optim: { name: adam, lr: 1.0e-3, weight_decay: 0.0 }
+training: { max_epochs: 60, patience: 10, batch_size: 32 }
+param_count: 2400000
+hp_search:
+  n_configs: 20
+  lr: [3.0e-4, 1.0e-3, 3.0e-3]
+  bilstm_hidden: [64, 128, 256]
+  cnn_dropout: [0.1, 0.2, 0.3]
+  choose_on: inner_val_bacc

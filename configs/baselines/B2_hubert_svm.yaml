@@ -1,0 +1,16 @@
+# B2 — HuBERT-Large features + SVM, after Javanmardi et al. 2024.
+# Reports Table 6. ~0.2 M parameters for the SVM; HuBERT is frozen.
+name: B2_hubert_svm
+encoder: { name: hubert-large-ll60k, hf_id: facebook/hubert-large-ll60k, frozen: true }
+feature_layer: 12                 # follows Javanmardi et al. 2024
+pooling: mean_time
+classifier:
+  type: svm
+  kernel: rbf
+  class_weight: balanced
+hp_search:
+  n_configs: 20
+  C:     [0.01, 0.1, 1.0, 10.0, 100.0]
+  gamma: [scale, 1.0e-3, 1.0e-2, 1.0e-1]
+  grid: cartesian
+  choose_on: inner_val_bacc

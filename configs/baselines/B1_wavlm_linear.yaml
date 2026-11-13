@@ -1,0 +1,15 @@
+# B1 — WavLM-Large frozen + linear probe on speaker-mean embeddings.
+# Reports Table 6. 1 k trainable parameters.
+name: B1_wavlm_linear_probe
+encoder: { name: wavlm-large, hf_id: microsoft/wavlm-large, frozen: true }
+pooling: mean_time
+head: { type: linear, in: 1024, out: 1 }
+optim: { name: adamw, lr: 1.0e-3, weight_decay: 0.01 }
+training: { max_epochs: 60, patience: 10 }
+param_count: 1024    # approx 1 k
+hp_search:
+  n_configs: 20
+  lr: [1.0e-4, 3.0e-4, 1.0e-3, 3.0e-3]
+  weight_decay: [0.0, 1.0e-3, 1.0e-2, 1.0e-1]
+  grid: cartesian
+  choose_on: inner_val_bacc

@@ -1,0 +1,147 @@
+# =========================================================================
+# SPARC-ALS v1.0.0 — Neuromotor Degradation Tensor (NDT) acoustic targets
+# Section 4.3 (Table 3) of the manuscript.
+#
+# These are *acoustic proxies*, not physiological measurements. All
+# components are z-scored against the healthy training/source speakers of
+# the fold (set R), winsorized to +/- 4, and signed so that larger values
+# mean "more impaired". Unobservable components are masked per corpus.
+# =========================================================================
+
+# --- Analysis window -----------------------------------------------------
+# All NDT components are computed on the central 40 % of each sustained
+# vowel or aligned nucleus, on audio band-limited to 4 kHz.
+central_fraction: 0.40
+analysis_bandwidth_hz: 4000
+
+# --- Reference set R -----------------------------------------------------
+# R holds healthy training speakers of the current LOSO fold (or of the
+# source corpora when evaluating across corpora). Never target or query
+# speakers. z-score is computed per-sex.
+reference_set:
+  partition: healthy_training
+  per_sex: true
+  winsor_bounds: [-4.0, 4.0]
+
+# --- Axes ----------------------------------------------------------------
+# Each axis: components (name, Praat settings, sign, per-corpus observability).
+# Sign is +1 if larger-is-worse, -1 if smaller-is-worse.
+
+axes:
+
+  # (i) Phonatory stability -------------------------------------------------
+  phonatory_stability:
+    observed:
+      voc_als:   true
+      minsk2020: true
+      torgo:     false
+    components:
+      - name: local_jitter
+        sign: +1
+        praat:
+          pitch:
+            method: cc
+            time_step: 0.010
+            f0_range_hz_male:   [75, 300]
+            f0_range_hz_female: [100, 500]
+          pulses:
+            period_floor_s: 0.0001
+            period_ceiling_s: 0.020
+            maximum_period_factor: 1.3
+            maximum_amplitude_factor: 1.6
+      - name: local_shimmer
+        sign: +1
+        praat: { same_as: local_jitter }
+      - name: hnr
+        sign: -1
+        praat:
+          harmonicity:
+            method: cc
+            time_step: 0.010
+            silence_threshold: 0.1
+            periods_per_window: 1.0
+            f0_min_hz: 75
+      - name: f0_sd
+        sign: +1
+        praat: { same_as: local_jitter }
+
+  # (ii) Articulatory precision --------------------------------------------
+  articulatory_precision:
+    observed:
+      voc_als:   true
+      minsk2020: distance_only    # only /a/–/i/ Bark distance
+      torgo:     aligned          # requires >= 3 /a/, /i/ (and /u/ when present)
+    components:
+      - name: centralization_ratio
+        sign: +1
+        notes: "Sapir et al. 2010; needs {a, e, i, u} — not used on Minsk2020."
+        praat:
+          formant:
+            method: burg
+            time_step: 0.010
+            window_length_s: 0.025
+            max_number_formants: 4
+            formant_ceiling_hz: 4000
+      - name: a_i_bark_distance
+        sign: -1
+        praat: { same_as: centralization_ratio }
+
+  # (iii) Prosodic / timing control ----------------------------------------
+  prosodic_timing:
+    observed:
+      voc_als:   true
+      minsk2020: false
+      torgo:     false
+    components:
+      - name: ddk_rate
+        sign: -1
+        praat:
+          intensity:
+            minimum_pitch_hz: 100
+            time_step_s: 0.005
+          syllable_peaks_db_above_dip: 2.0
+      - name: interval_variation
+        sign: +1
+        praat: { same_as: ddk_rate }
+
+  # (iv) Respiratory / phonatory support -----------------------------------
+  respiratory_support:
+    observed:
+      voc_als:   true
+      minsk2020: true
+      torgo:     false
+    components:
+      - name: intensity_slope_a
+        sign: -1
+        praat:
+          intensity:
+            minimum_pitch_hz: 100
+            time_step_s: 0.010
+      - name: cpps
+        sign: -1
+        praat:
+          cepstrogram:
+            pitch_floor_hz: 60
+            time_step_s: 0.002
+          peak_search_range_hz: [60, 330]
+
+# --- Axis mask ------------------------------------------------------------
+# For each speaker, axis j is masked out (m_j = 0) when no component is
+# observed on their corpus. The per-corpus `observed` flags above drive
+# this.
+
+# --- Target aggregation --------------------------------------------------
+# Equation (5):
+#   t_j = (sum_m o_{jm} s_{jm} z~_{jm}) / (sum_m o_{jm})
+#   z~_{jm} = clip( (c_{jm} - mu^R_{jm}) / sigma^R_{jm}, -4, 4 )
+#   m_j    = 1[ sum_m o_{jm} > 0 ]
+
+# --- Uncertainty weighting (Kendall et al. 2018) -------------------------
+# Equation (6): sigma_j is a learnable log-variance, initialised at 0.
+uncertainty_weighting:
+  init_log_sigma: 0.0
+  per_axis: true
+
+# --- Output --------------------------------------------------------------
+reference_statistics_path: data/features/reference_stats_seed{seed}.npz
+targets_manifest: data/features/ndt_targets.csv

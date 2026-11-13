@@ -1,0 +1,155 @@
+# =========================================================================
+# SPARC-ALS v1.0.0 — training-time hyperparameters
+# Section 4 and Section 5 of the manuscript.
+# =========================================================================
+
+# --- Seeds ---------------------------------------------------------------
+# Every randomness source (numpy, torch, torch.cuda, dataloader workers,
+# dropout, counterfactual sampling, episode drawing) is seeded from this
+# list. All released predictions carry one of these as `seed_id`.
+seeds: [11, 23, 42, 77, 2025]
+
+# --- Encoder -------------------------------------------------------------
+encoder:
+  name: wavlm-large
+  hf_id: microsoft/wavlm-large
+  layers: 24
+  hidden_dim: 1024
+  frozen: true
+  layer_mixing_init: uniform_softmax
+  layer_mixing_per_path: true       # separate weights for pathology / nuisance
+
+# --- Adapters ------------------------------------------------------------
+# Equation under Section 4.1: A(H) = H + phi( DWConv( H W_down ) ) W_up.
+adapter:
+  hidden_down: 64
+  hidden_up:   1024
+  depthwise_conv_width: 15
+  activation: gelu
+  bias: true
+
+# --- Attentive statistics pooling (Okabe et al. 2018) --------------------
+asp:
+  hidden_dim: 128                 # W_a in R^{128 x 1024}, v in R^{128}
+  output_dim: 256                 # W_o in R^{256 x 2048}
+  include_sigma: true
+  add_token_type_embedding: true
+
+# --- Supervised contrastive loss -----------------------------------------
+sup_con:
+  temperature_tau: 0.1
+  batch_size: 32
+  patients_per_batch: 16
+  controls_per_batch: 16
+  min_speakers_per_class: 2
+  min_speakers_per_severity_level: 2
+  max_utterances_per_torgo_speaker: 4
+  exclude_same_speaker_pairs: true
+
+# --- GRL (Ganin et al. 2016) --------------------------------------------
+grl:
+  lambda_schedule: sigmoid          # 2/(1 + e^{-10 omega}) - 1
+  speaker_classifier:
+    hidden_dim: 128
+    dropout: 0.1
+    activation: gelu
+    train_only: true
+  domain_classifier:
+    hidden_dim: 128
+    dropout: 0.1
+    activation: gelu
+    train_only: true
+  disable_domain_terms_if_single_corpus: true
+
+# --- Disentanglement loss -----------------------------------------------
+disentangle:
+  psi: 0.5            # weight of adversarial + nuisance terms
+  zeta: 0.1           # Frobenius norm of cross-covariance
+
+# --- Full objective weights ---------------------------------------------
+# L = L_det + lambda_1 * L_ndt + lambda_2 * L_dis + lambda_3 * L_cf + lambda_4 * L_ord
+full_objective:
+  lambda_1_ndt: 0.5
+  lambda_2_dis: 0.3
+  lambda_3_cf:  0.2
+  lambda_4_ord: 0.5
+
+# --- Optimizer -----------------------------------------------------------
+optim:
+  name: adamw
+  lr: 3.0e-4
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  warmup_steps: 500
+  scheduler: cosine
+  grad_clip_norm: 1.0
+
+# --- Epoch / patience ---------------------------------------------------
+training_loop:
+  max_epochs: 60
+  patience: 10
+  monitor: inner_val_loss
+  mode: min
+  precision: bf16
+
+# --- Checkpoint rule ----------------------------------------------------
+# The lowest-inner-validation-loss checkpoint is kept. In E4 only, the
+# checkpoint is chosen on 200 fixed source inner-validation episodes.
+checkpointing:
+  keep_only_best: true
+  source_episodes_for_E4: 200
+  save_dir: checkpoints/{experiment}/{corpus}/seed{seed}/
+
+# --- Calibration --------------------------------------------------------
+# Temperature fit once on source inner-validation speakers, frozen on
+# target. Per-fold values are released at
+# predictions/<corpus>/temperature_seed<seed>.json.
+calibration:
+  method: temperature_scaling
+  fit_on: source_inner_validation
+  refit_on_target: false
+  decision_threshold_prob: 0.5
+  high_specificity_threshold_on_inner_val: 0.90
+
+# --- Inference ----------------------------------------------------------
+inference:
+  unit: speaker
+  speaker_logit_rule: mean_over_token_set   # or mean over 150 TORGO utterances
+  seed_average_rule: mean_over_5_seeds
+
+# --- Statistical tests --------------------------------------------------
+stats:
+  bootstrap:
+    method: class_stratified_cluster_bootstrap
+    n_resamples: 2000
+    alpha: 0.05
+  paired:
+    mcnemar: exact
+    delong: true
+    multiple_comparison_correction: holm
+
+# --- Meta-adaptation (Stage 6) -----------------------------------------
+meta:
+  inner_steps: 3
+  inner_lr_eta: 0.01          # eta
+  prototype_temperature: 1.0  # tau_p
+  frozen_nuisance_path: true
+  support_k_per_class: [1, 5, 10]
+  support_k_torgo:    [1, 3, 5]
+  n_episodes: 100
+
+# --- Trainable parameters (sanity check) -------------------------------
+# Section 4.5: 1,913,025 total (training-only classifiers add 99,074 in a
+# VOC-ALS fold). The frozen encoder is 316.6 M parameters.
+param_count:
+  layer_mixing: 48
+  adapters:     266368
+  pooling_projections: 1312768
+  vsga:         168320
+  ndt:          33416
+  heads:        521
+  film:         131584
+  total_trainable: 1913025
+  training_only_classifiers_voc_als: 99074
+  frozen_encoder: 316600000

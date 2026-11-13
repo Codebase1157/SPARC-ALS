@@ -1,0 +1,57 @@
+# =========================================================================
+# SPARC-ALS v1.0.0 — Graph priors for Vowel-Space Graph Attention (VSGA)
+# Section 4.2 of the manuscript.
+# =========================================================================
+
+# --- Canonical Bark-scaled F1/F2 positions (Peterson & Barney, 1952) -----
+# Used to compute the exponential vowel edge weights
+#   e_{vu} = exp(-||phi_v - phi_u||^2 / 2 h^2)
+# with bandwidth h = 0.35.
+# Values are (F1, F2) Bark coordinates.
+formant_positions_bark:
+  a:  [7.52, 11.21]
+  e:  [4.52, 13.69]
+  i:  [2.75, 14.77]
+  o:  [5.15, 10.03]
+  u:  [2.95,  9.62]
+
+# --- Bandwidth of the Gaussian edge-weight kernel ------------------------
+bandwidth_h: 0.35
+
+# --- Syllable links ------------------------------------------------------
+# /pa/–/ta/ and /ta/–/ka/ have unit weight; each syllable also links to /a/
+# with weight 0.5. Every node has a self-loop. All other pairs have no edge.
+syllable_edges:
+  - { u: pa, v: ta, weight: 1.0 }
+  - { u: ta, v: ka, weight: 1.0 }
+  - { u: pa, v: a,  weight: 0.5 }
+  - { u: ta, v: a,  weight: 0.5 }
+  - { u: ka, v: a,  weight: 0.5 }
+
+self_loop_weight: 1.0
+
+# --- Attention architecture ----------------------------------------------
+num_heads: 4
+head_dim: 64              # concat gives 256, matching the token embedding
+num_layers: 2             # layers do not share parameters
+negative_slope: 0.2       # LeakyReLU in chi_{vu}^k
+layernorm_after_concat: true
+
+# --- Learnable severity edge G ∈ R^{8x8} ---------------------------------
+# One matrix per layer, shared across heads of that layer, initialised at 0.
+severity_edge:
+  shape: [8, 8]
+  init: zeros
+  per_layer: true
+  share_across_heads: true
+
+# --- Missing-token policy ------------------------------------------------
+# Missing tokens are removed from the graph, not zero-filled. So a
+# Minsk2020 speaker forms a two-node graph over {/a/, /i/}.
+missing_token_policy: remove
+
+# --- Readout -------------------------------------------------------------
+readout:
+  type: attentive
+  q_dim: 128                # W_r ∈ R^{128x256}, q ∈ R^{128}
+  activation: tanh
